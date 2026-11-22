@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Depends, UploadFile, status, Request
 from fastapi.responses import JSONResponse
 from helpers.config import get_settings, Settings
 from controllers import DataController, ProjectController, ProcessController
 from models import ResponseSignal
 from .schemas.data import ProcessRequest
+from models.ProjectModel import ProjectModel
+from models.ChunkModel import ChunkModel
+from models.db_schemas import DataChunk
 import aiofiles
 import logging
 
@@ -18,10 +21,19 @@ data_router = APIRouter(
 
 @data_router.post("/upload/{project_id}")
 async def upload_data(
+    request: Request,
     project_id: str,
     file: UploadFile,
     app_settings: Settings = Depends(get_settings)
 ):
+
+    project_model = ProjectModel(
+        db_client=request.app.db_client
+    )
+
+    project = await project_model.get_project_or_create_one(
+        project_id=project_id
+    )
 
     data_controller = DataController()
 
@@ -68,6 +80,7 @@ async def upload_data(
 
 @data_router.post("/process/{project_id}")
 async def process_data(
+    request: Request,
     project_id: str,
     process_request: ProcessRequest
 ):
@@ -75,6 +88,15 @@ async def process_data(
     file_id = process_request.file_id
     chunk_size = process_request.chunk_size
     overlap_size = process_request.overlap_size
+    do_reset = process_request.do_reset
+
+    project_model = ProjectModel(
+        db_client=request.app.db_client
+    )
+
+    project = await project_model.get_project_or_create_one(
+            project_id=project_id
+        )
 
     if overlap_size >= chunk_size:
         return JSONResponse(
@@ -102,4 +124,32 @@ async def process_data(
             }
         )
 
-    return file_chunks
+    file_chunks_records = [
+        DataChunk(
+            chunk_text=chunk.page_content,
+            chunk_metadata=chunk.metadata,
+            chunk_order=i,
+            chunk_project_id=project.id
+        )
+        for i, chunk in enumerate(file_chunks, start=1)
+    ]
+
+    chunk_model = ChunkModel(
+        db_client=request.app.db_client
+    )
+
+    if do_reset == 1:
+        _ = await chunk_model.delete_chunks_by_project_id(
+            project_id=project.id
+        )
+
+    no_inserted_chunks = await chunk_model.insert_many_chunks(
+        chunks=file_chunks_records
+    )
+
+    return JSONResponse(
+        content={
+            "signal": ResponseSignal.PROCESSING_SUCCESS.value,
+            "inserted_chunks": no_inserted_chunks
+        }
+    )
