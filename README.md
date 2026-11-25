@@ -39,10 +39,10 @@ pip install -r requirements.txt
 ### Setup the environment variables
 
 ```bash
-$ cp .env.example .env
+cp .env.example .env
 ```
 
-Set your environment variables in the `.env` file. Like `OPENAI_API_KEY` value.
+- Set your environment variables in the `.env` file. Like `OPENAI_API_KEY` value.
 
 ## Run the FastAPI server
 
@@ -51,6 +51,13 @@ uvicorn main:app --reload --host 0.0.0.0 --port 5000
 ```
 
 ## Run Docker Compose Services
+
+```bash
+cd docker
+cp .env.example .env
+```
+
+- Update `.env` with your credentials
 
 ```bash
 cd docker
