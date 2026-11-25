@@ -1,6 +1,7 @@
 from .BaseDataModel import BaseDataModel
 from .db_schemas import DataChunk
 from .enums.DataBaseEnums import DataBaseEnums
+from typing import Union
 from bson.objectid import ObjectId
 from pymongo import InsertOne
 
@@ -38,10 +39,13 @@ class ChunkModel(BaseDataModel):
         chunk.id = result.inserted_id
         return chunk
 
-    async def get_chunk(self, chunk_id: str):
+    async def get_chunk(self, chunk_id: Union[str, ObjectId]):
+
+        if isinstance(chunk_id, str):
+            chunk_id = ObjectId(chunk_id)
 
         record = await self.collection.find_one({
-            "_id": ObjectId(chunk_id)
+            "_id": chunk_id
         })
 
         if record is None:
@@ -63,7 +67,10 @@ class ChunkModel(BaseDataModel):
 
         return len(chunks)
 
-    async def delete_chunks_by_project_id(self, project_id: ObjectId):
+    async def delete_chunks_by_project_id(self, project_id: Union[str, ObjectId]):
+
+        if isinstance(project_id, str):
+            project_id = ObjectId(project_id)
 
         result = await self.collection.delete_many({
             "chunk_project_id": project_id
