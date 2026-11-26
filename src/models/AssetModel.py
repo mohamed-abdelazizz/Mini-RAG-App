@@ -38,11 +38,17 @@ class AssetModel(BaseDataModel):
         asset.id = result.inserted_id
         return asset
 
-    async def get_all_project_assets(self, asset_project_id: Union[str, ObjectId]):
+    async def get_all_project_assets(self, asset_project_id: Union[str, ObjectId], asset_type: str):
 
         if isinstance(asset_project_id, str):
             asset_project_id = ObjectId(asset_project_id)
 
-        return await self.collection.find({
-            "asset_project_id": asset_project_id
+        records = await self.collection.find({
+            "asset_project_id": asset_project_id,
+            "asset_type": asset_type
         }).to_list(length=None)
+
+        return [
+            Asset(**record)
+            for record in records
+        ]
