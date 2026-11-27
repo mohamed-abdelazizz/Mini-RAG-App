@@ -10,3 +10,4 @@ class ResponseSignal(Enum):
     FILE_UPLOAD_FAILED = "file_upload_failed"
     PROCESSING_SUCCESS = "processing_success"
     PROCESSING_FAILED = "processing_failed"
+    INVALID_CHUNK_OVERLAP_SIZE = "chunk_size_must_be_greater_than_overlap_size"

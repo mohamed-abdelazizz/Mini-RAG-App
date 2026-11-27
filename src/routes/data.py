@@ -106,20 +106,20 @@ async def process_data(
     overlap_size = process_request.overlap_size
     do_reset = process_request.do_reset
 
+    if overlap_size >= chunk_size:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "signal": ResponseSignal.INVALID_CHUNK_OVERLAP_SIZE.value
+            }
+        )
+
     project_model = await ProjectModel.create_instance(
         db_client=request.app.db_client
     )
 
     project = await project_model.get_project_or_create_one(
             project_id=project_id
-        )
-
-    if overlap_size >= chunk_size:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "signal": ResponseSignal.PROCESSING_FAILED.value
-            }
         )
 
     process_controller = ProcessController(project_id=project_id)
