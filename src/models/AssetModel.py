@@ -38,13 +38,14 @@ class AssetModel(BaseDataModel):
         asset.id = result.inserted_id
         return asset
 
-    async def get_asset(self, asset_id: Union[str, ObjectId]):
+    async def get_asset(self, asset_id: Union[str, ObjectId], asset_name: str):
 
         if isinstance(asset_id, str):
             asset_id = ObjectId(asset_id)
 
         record = self.collection.find_one({
-            "_id": asset_id
+            "_id": asset_id,
+            "asset_name": asset_name
         })
 
         if record is None:
