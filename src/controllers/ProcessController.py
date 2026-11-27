@@ -31,6 +31,9 @@ class ProcessController(BaseController):
             file_id
         )
 
+        if not os.path.exists(file_path):
+            return None
+
         file_extension = self.get_file_extension(file_id=file_id)
 
         if file_extension == ProcessingEnums.TXT.value:
@@ -39,11 +42,12 @@ class ProcessController(BaseController):
         elif file_extension == ProcessingEnums.PDF.value:
             return PyMuPDFLoader(file_path)
 
-        return None
-
     def get_file_content(self, file_id: str):
 
         file_loader = self.get_file_loader(file_id=file_id)
+
+        if file_loader is None:
+            return None
 
         documents = file_loader.load()
 
